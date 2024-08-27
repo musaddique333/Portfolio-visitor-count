@@ -8,12 +8,13 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 
 // Path to your JSON file
-const countFilePath = path.join(__dirname, 'visitor-curl http://localhost:3000/api/visitor-countcount.json');
+const countFilePath = path.join(__dirname, 'visitor-count.json');
 
 // Endpoint to update visitor count
 app.post('/api/update-count', (req, res) => {
   fs.readFile(countFilePath, 'utf8', (err, data) => {
     if (err) {
+      console.error('Error reading file:', err);
       return res.status(500).json({ error: 'Failed to read count file' });
     }
 
@@ -25,6 +26,7 @@ app.post('/api/update-count', (req, res) => {
 
     fs.writeFile(countFilePath, count.toString(), (err) => {
       if (err) {
+        console.error('Error writing file:', err);
         return res.status(500).json({ error: 'Failed to update count file' });
       }
       res.status(200).json({ message: 'Count updated successfully' });
@@ -36,6 +38,7 @@ app.post('/api/update-count', (req, res) => {
 app.get('/api/visitor-count', (req, res) => {
   fs.readFile(countFilePath, 'utf8', (err, data) => {
     if (err) {
+      console.error('Error reading file:', err);
       return res.status(500).json({ error: 'Failed to read count file' });
     }
 
