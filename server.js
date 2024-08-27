@@ -3,28 +3,61 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000; // Use environment variable for port
 
-app.use(express.json());
+// Serve static files from the 'static' directory
+app.use(express.static('static'));
 
-const filePath = path.join(__dirname, 'visitor-count.json');
-
+// Endpoint to update visitor count
 app.post('/api/update-count', (req, res) => {
-  fs.readFile(filePath, 'utf8', (err, data) => {
+  const countFilePath = path.join(__dirname, 'static', 'visitor-count.json');
+
+  // Read the current visitor count
+  fs.readFile(countFilePath, 'utf8', (err, data) => {
     if (err) {
-      return res.status(500).json({ error: 'Internal Server Error' });
+      console.error('Error reading visitor count file:', err);
+      return res.status(500).send('Internal Server Error');
     }
-    const json = JSON.parse(data);
-    json.count = (json.count || 0) + 1;
-    fs.writeFile(filePath, JSON.stringify(json), 'utf8', (err) => {
+
+    let count;
+    try {
+      count = JSON.parse(data);
+    } catch (e) {
+      console.error('Error parsing visitor count file:', e);
+      count = { count: 0 };
+    }
+
+    // Update the count
+    count.count += 1;
+
+    // Write the updated count back to the file
+    fs.writeFile(countFilePath, JSON.stringify(count, null, 2), (err) => {
       if (err) {
-        return res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Error writing visitor count file:', err);
+        return res.status(500).send('Internal Server Error');
       }
-      res.json({ count: json.count });
+      res.status(200).send('Visitor count updated');
     });
   });
 });
 
+// Serve the visitor count endpoint
+app.get('/api/visitor-count', (req, res) => {
+  const countFilePath = path.join(__dirname, 'static', 'visitor-count.json');
+
+  // Read the visitor count file
+  fs.readFile(countFilePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading visitor count file:', err);
+      return res.status(500).send('Internal Server Error');
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    res.send(data);
+  });
+});
+
+// Start the server
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+  console.log(`Server running on port ${port}`);
 });
