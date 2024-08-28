@@ -1,8 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
-const axios = require('axios'); // For making requests to the IPInfo API
-const ipinfo = require('ipinfo');
+const axios = require('axios');
 require('dotenv').config();
 const path = require('path');
 
@@ -61,11 +60,11 @@ const initializeDatabase = async () => {
       const createTableQuery = `
         CREATE TABLE visitor_info (
           id SERIAL PRIMARY KEY,
-          ip TEXT NOT NULL,
-          city TEXT,
-          region TEXT,
-          country TEXT,
-          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          ip_address VARCHAR(255) NOT NULL,
+          city VARCHAR(255),
+          region VARCHAR(255),
+          country VARCHAR(255),
+          timestamp TIMESTAMP NOT NULL
         );
       `;
       
@@ -97,7 +96,13 @@ app.post('/api/log-visitor', async (req, res) => {
 
     const { error: insertVisitorError } = await supabase
       .from('visitor_info') 
-      .insert([{ ip: visitorIp, city, region, country, timestamp }]);
+      .insert([{ 
+        ip_address: visitorIp,  // Use the updated column name
+        city, 
+        region, 
+        country, 
+        timestamp 
+      }]);
 
     if (insertVisitorError) {
       throw insertVisitorError;
