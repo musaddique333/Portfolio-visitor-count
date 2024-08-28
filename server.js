@@ -21,44 +21,62 @@ app.use(express.static(path.join(__dirname)));
 
 // Initialize database and tables
 const initializeDatabase = async () => {
-  // Check if visitor_count table exists
-  const { data: countTableExists, error: countTableError } = await supabase
-    .from('visitor_count')
-    .select('*')
-    .limit(1);
-
-  if (countTableError) {
-    console.error('Error checking visitor_count table:', countTableError.message);
-    return;
-  }
-
-  if (countTableExists.length === 0) {
-    // Insert initial count
-    const { error: insertCountError } = await supabase
+  try {
+    // Check if visitor_count table exists
+    const { data: countTableExists, error: countTableError } = await supabase
       .from('visitor_count')
-      .insert({ id: 1, count: 0 });
+      .select('*')
+      .limit(1);
 
-    if (insertCountError) {
-      console.error('Error inserting initial count:', insertCountError.message);
+    if (countTableError) {
+      console.error('Error checking visitor_count table:', countTableError.message);
+      return;
     }
-  }
 
-  // Check if visitor_info table exists
-  const { error: visitorInfoError } = await supabase
-    .rpc('check_table_exists', { table_name: 'visitor_info' });
+    if (countTableExists.length === 0) {
+      // Insert initial count
+      const { error: insertCountError } = await supabase
+        .from('visitor_count')
+        .insert({ id: 1, count: 0 });
 
-  if (visitorInfoError) {
-    console.error('Error checking visitor_info table:', visitorInfoError.message);
-    return;
-  }
-
-  if (!visitorInfoError) {
-    // Create visitor_info table if it doesn't exist
-    const { error: createInfoTableError } = await supabase.rpc('create_visitor_info_table');
-
-    if (createInfoTableError) {
-      console.error('Error creating visitor_info table:', createInfoTableError.message);
+      if (insertCountError) {
+        console.error('Error inserting initial count:', insertCountError.message);
+      }
     }
+
+    // Check if visitor_info table exists
+    const { data: infoTableExists, error: infoTableError } = await supabase
+      .from('information_schema.tables')
+      .select('table_name')
+      .eq('table_name', 'visitor_info')
+      .single();
+
+    if (infoTableError) {
+      console.error('Error checking visitor_info table:', infoTableError.message);
+      return;
+    }
+
+    if (!infoTableExists) {
+      // Create visitor_info table if it doesn't exist
+      const createTableQuery = `
+        CREATE TABLE visitor_info (
+          id SERIAL PRIMARY KEY,
+          ip TEXT NOT NULL,
+          city TEXT,
+          region TEXT,
+          country TEXT,
+          timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `;
+      
+      const { error: createInfoTableError } = await supabase.rpc('execute_sql', { sql: createTableQuery });
+
+      if (createInfoTableError) {
+        console.error('Error creating visitor_info table:', createInfoTableError.message);
+      }
+    }
+  } catch (error) {
+    console.error('Error initializing database:', error.message);
   }
 };
 
