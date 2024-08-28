@@ -1,9 +1,12 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS  # Import CORS
 import os
 import threading
 
 app = Flask(__name__)
+
+CORS(app)
 
 # Setup database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///visitor-count.db'
@@ -28,9 +31,6 @@ def firstRun():
                 db.session.add(VisitorCount(count=0))
                 db.session.commit()
         appHasRunBefore = True
-        # Start any background tasks if necessary
-        # thread = threading.Thread(target=your_background_task, args=())
-        # thread.start()
 
 @app.route('/api/update-count', methods=['POST'])
 def update_count():
