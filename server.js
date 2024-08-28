@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const axios = require('axios'); // For making requests to the IPInfo API
 require('dotenv').config();
 const path = require('path');
 
@@ -18,30 +19,75 @@ app.use(express.json());
 // Serve static files from the current directory
 app.use(express.static(path.join(__dirname)));
 
-// Initialize database and table
+// Initialize database and tables
 const initializeDatabase = async () => {
-  const { data: tableExists, error: tableError } = await supabase
+  // Check if visitor_count table exists
+  const { data: countTableExists, error: countTableError } = await supabase
     .from('visitor_count')
     .select('*')
     .limit(1);
 
-  if (tableError) {
-    console.error('Table check error:', tableError.message);
+  if (countTableError) {
+    console.error('Error checking visitor_count table:', countTableError.message);
     return;
   }
 
-  if (tableExists.length === 0) {
-    const { error: insertError } = await supabase
+  if (countTableExists.length === 0) {
+    // Insert initial count
+    const { error: insertCountError } = await supabase
       .from('visitor_count')
       .insert({ id: 1, count: 0 });
 
-    if (insertError) {
-      console.error('Insert initial count error:', insertError.message);
+    if (insertCountError) {
+      console.error('Error inserting initial count:', insertCountError.message);
+    }
+  }
+
+  // Check if visitor_info table exists
+  const { error: visitorInfoError } = await supabase
+    .rpc('check_table_exists', { table_name: 'visitor_info' });
+
+  if (visitorInfoError) {
+    console.error('Error checking visitor_info table:', visitorInfoError.message);
+    return;
+  }
+
+  if (!visitorInfoError) {
+    // Create visitor_info table if it doesn't exist
+    const { error: createInfoTableError } = await supabase.rpc('create_visitor_info_table');
+
+    if (createInfoTableError) {
+      console.error('Error creating visitor_info table:', createInfoTableError.message);
     }
   }
 };
 
 initializeDatabase().catch(console.error);
+
+// Endpoint to log visitor info
+app.post('/api/log-visitor', async (req, res) => {
+  try {
+    const visitorIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const ipInfoToken = process.env.IPINFO_TOKEN;
+
+    const ipInfoResponse = await axios.get(`https://ipinfo.io/${visitorIp}?token=${ipInfoToken}`);
+    const { city, region, country } = ipInfoResponse.data;
+    const timestamp = new Date().toISOString();
+
+    const { error: insertVisitorError } = await supabase
+      .from('visitor_info')
+      .insert([{ ip: visitorIp, city, region, country, timestamp }]);
+
+    if (insertVisitorError) {
+      throw insertVisitorError;
+    }
+
+    res.status(200).json({ message: 'Visitor logged successfully' });
+  } catch (error) {
+    console.error('Error logging visitor info:', error.message);
+    res.status(500).json({ error: 'Failed to log visitor info', details: error.message });
+  }
+});
 
 // Endpoint to update the visitor count
 app.post('/api/update-count', async (req, res) => {
@@ -65,7 +111,7 @@ app.post('/api/update-count', async (req, res) => {
 
     res.status(200).json({ message: 'Count updated successfully' });
   } catch (error) {
-    console.error('Update count error:', error.message);
+    console.error('Error updating visitor count:', error.message);
     res.status(500).json({ error: 'Failed to update count', details: error.message });
   }
 });
@@ -83,7 +129,7 @@ app.get('/api/visitor-count', async (req, res) => {
 
     res.status(200).json({ count: data.count });
   } catch (error) {
-    console.error('Get count error:', error.message);
+    console.error('Error getting visitor count:', error.message);
     res.status(500).json({ error: 'Failed to read count', details: error.message });
   }
 });
