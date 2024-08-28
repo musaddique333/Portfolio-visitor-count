@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
-const ipinfo = require('ipinfo-express');
+const axios = require('axios'); // For making requests to the IPInfo API
+const ipinfo = require('ipinfo');
 require('dotenv').config();
 const path = require('path');
 
@@ -12,14 +13,6 @@ const PORT = process.env.PORT || 5000;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// IPinfo middleware setup
-const ipinfoToken = process.env.IPINFO_TOKEN;
-app.use(ipinfo({
-  token: ipinfoToken,
-  cache: null,
-  timeout: 5000,
-}));
 
 app.use(cors());
 app.use(express.json());
@@ -92,11 +85,14 @@ initializeDatabase().catch(console.error);
 // Endpoint to log visitor info
 app.post('/api/log-visitor', async (req, res) => {
   try {
-    const visitorIp = req.ipinfo.ip;
-    const { city, region, country } = req.ipinfo;
-    const timestamp = new Date().toISOString();
+    const visitorIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const ipInfoToken = process.env.IPINFO_TOKEN;
 
     console.log(`Received request to log visitor info from IP: ${visitorIp}`);
+
+    const ipInfoResponse = await axios.get(`https://ipinfo.io/${visitorIp}?token=${ipInfoToken}`);
+    const { city, region, country } = ipInfoResponse.data;
+    const timestamp = new Date().toISOString();
 
     const { error: insertVisitorError } = await supabase
       .from('visitor_info') 

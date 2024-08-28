@@ -21,6 +21,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "ipinfo": "^1.5.1",
     "ipinfo-express": "^2.0.2",
     "portfolio-visitor-count": "file:"
   },
