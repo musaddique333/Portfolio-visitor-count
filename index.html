@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portfolio Server</title>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #212429; /* Dark background color */
+            color: #f5f5f5; /* Text color */
+        }
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .content {
+            text-align: center;
+        }
+        h1 {
+            color: #39e079; /* Primary color for heading */
+            margin-bottom: 1rem;
+        }
+        p {
+            color: #f5f5f5; /* Text color */
+            margin-bottom: 1rem;
+        }
+        p a {
+            color: #39e079; /* Link color */
+            text-decoration: none;
+        }
+        p a:hover {
+            text-decoration: underline;
+        }
+        .time {
+            color: #888;
+        }
+        .fa-link, .fa-github {
+            margin-left: 10px;
+            color: #f5f5f5;
+            transition: color 0.3s;
+        }
+        .fa-link:hover, .fa-github:hover {
+            color: #39e079;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <h1>🚀 API is running smoothly! 🌟</h1>
+            <p>Welcome! This is the API server for the Portfolio Visitor Count application.</p>
+            <p>Developer: Mohammed Musaddique</p>
+            <p>Developer Username: musaddique333</p>
+            <p>This API is used to check the visitor count for my portfolio website.</p>
+            <p>
+                My portfolio is hosted on <a href="https://vercel.com" target="_blank">Vercel<i class="fa fa-link"></i></a> | 
+                <a href="https://github.com/musaddique333/portfolio" target="_blank">Code: <i class="fa-brands fa-github"></i></a>
+            </p>
+            <p>
+                The Express server is hosted on <a href="https://render.com" target="_blank">Vercel<i class="fa fa-link"></i></a> | 
+                <a href="https://github.com/musaddique333/Portfolio-visitor-count" target="_blank">Code: <i class="fa-brands fa-github"></i></a>
+            </p>
+            <p>
+                The PostgreSQL database is hosted on <a href="https://supabase.com/" target="_blank">Vercel<i class="fa fa-link"></i></a>
+            </p>
+            <p>
+                Check the project on GitHub
+                <a href="https://github.com/musaddique333" target="_blank">
+                    Profile:<i class="fa-brands fa-github"></i>
+                </a>
+            </p>
+            <p class="time">Current Time: <span id="currentTime"></span></p>
+        </div>
+    </div>
+    <script>
+        document.getElementById("currentTime").innerText =
+            new Date().toLocaleTimeString()
+    </script>
+</body>
+</html>

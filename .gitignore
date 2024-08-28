@@ -2,4 +2,4 @@
 /__pycache__
 /instance
 /node_modules
-visitor-count.db
+.env
