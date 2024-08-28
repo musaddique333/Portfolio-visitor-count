@@ -85,7 +85,8 @@ initializeDatabase().catch(console.error);
 // Endpoint to log visitor info
 app.post('/api/log-visitor', async (req, res) => {
   try {
-    const visitorIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const ipAddresses = (req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',').map(ip => ip.trim());
+    const visitorIp = ipAddresses[0]; 
     const ipInfoToken = process.env.IPINFO_TOKEN;
 
     console.log(`Received request to log visitor info from IP: ${visitorIp}`);
