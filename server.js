@@ -46,10 +46,9 @@ const initializeDatabase = async () => {
 
     // Check if visitor_info table exists
     const { data: infoTableExists, error: infoTableError } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_name', 'visitor_info')
-      .single();
+      .from('visitor_info')
+      .select('*')
+      .limit(1);
 
     if (infoTableError) {
       console.error('Error checking visitor_info table:', infoTableError.message);
