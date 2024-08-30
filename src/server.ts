@@ -183,7 +183,7 @@ app.get('/api/visitor-count', async (req: Request, res: Response) => {
 
 // Serve index.html on root request
 app.get('/', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '../public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
