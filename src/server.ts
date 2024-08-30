@@ -1,23 +1,36 @@
-const express = require('express');
-const cors = require('cors');
-const { createClient } = require('@supabase/supabase-js');
-const axios = require('axios');
-require('dotenv').config();
-const path = require('path');
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import { createClient, PostgrestError } from '@supabase/supabase-js';
+import axios from 'axios';
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Supabase setup
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL as string;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-app.use(cors());
+// CORS configuration to allow only specified domains
+const allowedOrigins = ['https://www.musaddique.site', 'https://portfolio-ten-puce-90.vercel.app'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+}));
+
 app.use(express.json());
 
-// Serve static files from the current directory
-app.use(express.static(path.join(__dirname)));
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Initialize database and tables
 const initializeDatabase = async () => {
@@ -55,7 +68,7 @@ const initializeDatabase = async () => {
       return;
     }
 
-    if (!infoTableExists) {
+    if (infoTableExists.length === 0) {
       // Create visitor_info table if it doesn't exist
       const createTableQuery = `
         CREATE TABLE visitor_info (
@@ -75,18 +88,23 @@ const initializeDatabase = async () => {
       }
     }
   } catch (error) {
-    console.error('Error initializing database:', error.message);
+    // If the error is not a PostgrestError, fallback to generic error message
+    console.error('Error initializing database:', (error as PostgrestError).message || 'Unknown error');
   }
 };
 
 initializeDatabase().catch(console.error);
 
 // Endpoint to log visitor info
-app.post('/api/log-visitor', async (req, res) => {
+app.post('/api/log-visitor', async (req: Request, res: Response) => {
   try {
-    const ipAddresses = (req.headers['x-forwarded-for'] || req.socket.remoteAddress).split(',').map(ip => ip.trim());
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const ipAddresses = (typeof forwardedFor === 'string' ? forwardedFor : req.socket.remoteAddress || '')
+      .split(',')
+      .map((ip: string) => ip.trim());
+
     const visitorIp = ipAddresses[0]; 
-    const ipInfoToken = process.env.IPINFO_TOKEN;
+    const ipInfoToken = process.env.IPINFO_TOKEN as string;
 
     console.log(`Received request to log visitor info from IP: ${visitorIp}`);
 
@@ -95,13 +113,13 @@ app.post('/api/log-visitor', async (req, res) => {
     const timestamp = new Date().toISOString();
 
     const { error: insertVisitorError } = await supabase
-      .from('visitor_info') 
+      .from('visitor_info')
       .insert([{ 
-        ip_address: visitorIp,  // Use the updated column name
-        city, 
-        region, 
-        country, 
-        timestamp 
+        ip_address: visitorIp,
+        city,
+        region,
+        country,
+        timestamp
       }]);
 
     if (insertVisitorError) {
@@ -110,13 +128,14 @@ app.post('/api/log-visitor', async (req, res) => {
 
     res.status(200).json({ message: 'Visitor logged successfully' });
   } catch (error) {
-    console.error('Error logging visitor info:', error.message);
-    res.status(500).json({ error: 'Failed to log visitor info', details: error.message });
+    // If the error is not a PostgrestError, fallback to generic error message
+    console.error('Error logging visitor info:', (error as PostgrestError).message || 'Unknown error');
+    res.status(500).json({ error: 'Failed to log visitor info', details: (error as PostgrestError).message || 'Unknown error' });
   }
 });
 
 // Endpoint to update the visitor count
-app.post('/api/update-count', async (req, res) => {
+app.post('/api/update-count', async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from('visitor_count')
@@ -137,13 +156,14 @@ app.post('/api/update-count', async (req, res) => {
 
     res.status(200).json({ message: 'Count updated successfully' });
   } catch (error) {
-    console.error('Error updating visitor count:', error.message);
-    res.status(500).json({ error: 'Failed to update count', details: error.message });
+    // If the error is not a PostgrestError, fallback to generic error message
+    console.error('Error updating visitor count:', (error as PostgrestError).message || 'Unknown error');
+    res.status(500).json({ error: 'Failed to update count', details: (error as PostgrestError).message || 'Unknown error' });
   }
 });
 
 // Endpoint to get the visitor count
-app.get('/api/visitor-count', async (req, res) => {
+app.get('/api/visitor-count', async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from('visitor_count')
@@ -155,14 +175,15 @@ app.get('/api/visitor-count', async (req, res) => {
 
     res.status(200).json({ count: data.count });
   } catch (error) {
-    console.error('Error getting visitor count:', error.message);
-    res.status(500).json({ error: 'Failed to read count', details: error.message });
+    // If the error is not a PostgrestError, fallback to generic error message
+    console.error('Error getting visitor count:', (error as PostgrestError).message || 'Unknown error');
+    res.status(500).json({ error: 'Failed to read count', details: (error as PostgrestError).message || 'Unknown error' });
   }
 });
 
 // Serve index.html on root request
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+app.get('/', (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
 app.listen(PORT, () => {
