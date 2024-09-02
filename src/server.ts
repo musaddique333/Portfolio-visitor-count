@@ -30,7 +30,7 @@ app.use(cors({
 app.use(express.json());
 
 // Serve static files from the public directory
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Initialize database and tables
 const initializeDatabase = async () => {
@@ -183,7 +183,7 @@ app.get('/api/visitor-count', async (req: Request, res: Response) => {
 
 // Serve index.html on root request
 app.get('/', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
