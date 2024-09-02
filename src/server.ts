@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import cors from 'cors';
 import { createClient, PostgrestError } from '@supabase/supabase-js';
 import axios from 'axios';
-import dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config();
