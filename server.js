@@ -179,6 +179,25 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Heartbeat function to keep the server active
+const HEARTBEAT_URL = 'https://portfolio-visitor-count-d939.onrender.com';  // Your URL
+const HEARTBEAT_INTERVAL = 60 * 60 * 1000;  // 1 hour in milliseconds
+
+const sendHeartbeat = async () => {
+  try {
+    await axios.get(HEARTBEAT_URL);
+    console.log('Heartbeat sent successfully');
+  } catch (error) {
+    console.error('Error sending heartbeat:', error.message);
+  }
+};
+
+// Send a heartbeat immediately when the server starts
+sendHeartbeat();
+
+// Set up a timer to send heartbeat every hour
+setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
