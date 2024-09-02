@@ -30,11 +30,11 @@ app.use(cors({
 app.use(express.json());
 
 // Serve static files from the dist/public directory
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Serve index.html on root request
 app.get('/', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // Initialize database and tables
