@@ -29,8 +29,13 @@ app.use(cors({
 
 app.use(express.json());
 
-// Serve static files from the public directory
+// Serve static files from the dist/public directory
 app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Serve index.html on root request
+app.get('/', (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
 
 // Initialize database and tables
 const initializeDatabase = async () => {
@@ -179,11 +184,6 @@ app.get('/api/visitor-count', async (req: Request, res: Response) => {
     console.error('Error getting visitor count:', (error as PostgrestError).message || 'Unknown error');
     res.status(500).json({ error: 'Failed to read count', details: (error as PostgrestError).message || 'Unknown error' });
   }
-});
-
-// Serve index.html on root request
-app.get('/', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
